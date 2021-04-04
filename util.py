@@ -33,7 +33,7 @@ def correct_preds(probs, labels, tol=-1):
     if tol == -1:
         tol = int(max(np.round((events[5] - events[0])/30), 1))
     for i in range(len(events)):
-        preds[i] = np.argsort(probs[:, i])[-1]
+        preds[i] = np.argsort(probs[:, i])[-1] #gets event with highest probabily for each index??
     deltas = np.abs(events-preds)
     correct = (deltas <= tol).astype(np.uint8)
     return events, preds, deltas, tol, correct

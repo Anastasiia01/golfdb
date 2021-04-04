@@ -23,7 +23,7 @@ class EventDetector(nn.Module):
                            self.lstm_hidden, self.lstm_layers,
                            batch_first=True, bidirectional=bidirectional)
         if self.bidirectional:
-            self.lin = nn.Linear(2*self.lstm_hidden, 9)
+            self.lin = nn.Linear(2*self.lstm_hidden, 9) #9 number of event classes in our case: 3.
         else:
             self.lin = nn.Linear(self.lstm_hidden, 9)
         if self.dropout:

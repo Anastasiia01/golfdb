@@ -21,7 +21,7 @@ class GolfDB(Dataset):
     def __getitem__(self, idx):
         a = self.df.loc[idx, :]  # annotation info
         events = a['events']
-        events -= events[0]  # now frame #s correspond to frames in preprocessed video clips
+        events -= events[0]  # now frames correspond to frames in preprocessed video clips
 
         images, labels = [], []
         cap = cv2.VideoCapture(osp.join(self.vid_dir, '{}.mp4'.format(a['id'])))
@@ -29,7 +29,7 @@ class GolfDB(Dataset):
         if self.train:
             # random starting position, sample 'seq_length' frames
             start_frame = np.random.randint(events[-1] + 1)
-            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame) #set position
             pos = start_frame
             while len(images) < self.seq_length:
                 ret, img = cap.read()
@@ -52,9 +52,9 @@ class GolfDB(Dataset):
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 images.append(img)
                 if pos in events[1:-1]:
-                    labels.append(np.where(events[1:-1] == pos)[0][0])
+                    labels.append(np.where(events[1:-1] == pos)[0][0]) # any of action classes
                 else:
-                    labels.append(8)
+                    labels.append(8) # label no-class
             cap.release()
 
         sample = {'images':np.asarray(images), 'labels':np.asarray(labels)}
