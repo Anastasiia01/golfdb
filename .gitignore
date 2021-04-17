@@ -1,4 +1,6 @@
 idea/
 data/videos_160
+data/handwashing_videos
+data/handwashing.mat
 *.pkl
 *.tar
