@@ -21,29 +21,30 @@ class HandwashDB(Dataset):
     def __getitem__(self, idx):
         a = self.df.loc[idx, :]  # annotation info
         events = a['events']
-        print(events)
-        print(type(events))
         frame_count = a['total_frames'].item()
-        print(f"Before moving frames event indices are: \n{events}")
-        print(f"Total frames number is {frame_count}")
 
         max_frames_till_events = 90
         start = max(0, events[0]-max_frames_till_events)
         events -= start  # now frames correspond to frames in preprocessed video clips
-        print(f"After moving frames event indices are: \n{events}")
-
-        end = min(frame_count, events[-1]+max_frames_till_events )
-        print(f"end frame is {end}")
+        end = min(frame_count, events[-1]+max_frames_till_events )        
         
         images, labels = [], []
         cap = cv2.VideoCapture(osp.join(self.vid_dir, '{}.mp4'.format(a['video_name'])))
 
         if self.train:
             # random starting position, sample 'seq_length' frames
-            start_frame = np.random.randint(end + 1)
-            #start_frame = 80
+
+            choose_event = np.random.randint(0, 4)            
+            interval_center = events[choose_event]
+            interval_start = max(0, events[choose_event] - 100)
+            interval_end = min(end, events[choose_event] + 100)
+            #print(f"Selected event is {choose_event} and its frame is {interval_center}")
+
+            start_frame = np.random.randint(interval_start, interval_end + 1)
+            #print(f"Start frame {start_frame}")
             cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame) #set position
             pos = start_frame
+            
             while len(images) < self.seq_length:
                 ret, frame = cap.read()
                 if ret:
