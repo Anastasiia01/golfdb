@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
 
-class GolfDB(Dataset):
+class HandwashDB(Dataset):
     def __init__(self, data_file, vid_dir, seq_length, transform=None, train=True):
         self.df = pd.read_pickle(data_file)
         self.vid_dir = vid_dir
@@ -21,25 +21,38 @@ class GolfDB(Dataset):
     def __getitem__(self, idx):
         a = self.df.loc[idx, :]  # annotation info
         events = a['events']
-        events -= events[0]  # now frames correspond to frames in preprocessed video clips
+        print(events)
+        print(type(events))
+        frame_count = a['total_frames'].item()
+        print(f"Before moving frames event indices are: \n{events}")
+        print(f"Total frames number is {frame_count}")
 
+        max_frames_till_events = 90
+        start = max(0, events[0]-max_frames_till_events)
+        events -= start  # now frames correspond to frames in preprocessed video clips
+        print(f"After moving frames event indices are: \n{events}")
+
+        end = min(frame_count, events[-1]+max_frames_till_events )
+        print(f"end frame is {end}")
+        
         images, labels = [], []
-        cap = cv2.VideoCapture(osp.join(self.vid_dir, '{}.mp4'.format(a['id'])))
+        cap = cv2.VideoCapture(osp.join(self.vid_dir, '{}.mp4'.format(a['video_name'])))
 
         if self.train:
             # random starting position, sample 'seq_length' frames
-            start_frame = np.random.randint(events[-1] + 1)
+            start_frame = np.random.randint(end + 1)
+            #start_frame = 80
             cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame) #set position
             pos = start_frame
             while len(images) < self.seq_length:
-                ret, img = cap.read()
+                ret, frame = cap.read()
                 if ret:
-                    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                    img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     images.append(img)
-                    if pos in events[1:-1]:
-                        labels.append(np.where(events[1:-1] == pos)[0][0])
+                    if pos in events:
+                        labels.append(np.where(events == pos)[0][0]) #np.where(events == pos) returns the index where condition is true
                     else:
-                        labels.append(8)
+                        labels.append(4)
                     pos += 1
                 else:
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
@@ -48,8 +61,8 @@ class GolfDB(Dataset):
         else:
             # full clip
             for pos in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
-                _, img = cap.read()
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                _, frame = cap.read()
+                img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 images.append(img)
                 if pos in events[1:-1]:
                     labels.append(np.where(events[1:-1] == pos)[0][0]) # any of action classes
