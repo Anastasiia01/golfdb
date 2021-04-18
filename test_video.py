@@ -4,19 +4,15 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from eval import ToTensor, Normalize
-from model import EventDetector
+from model import Handy
 import numpy as np
 import torch.nn.functional as F
 
 event_names = {
-    0: 'Address',
-    1: 'Toe-up',
-    2: 'Mid-backswing (arm parallel)',
-    3: 'Top',
-    4: 'Mid-downswing (arm parallel)',
-    5: 'Impact',
-    6: 'Mid-follow-through (shaft parallel)',
-    7: 'Finish'
+    0: 'Wrist Appears',
+    1: 'Start Handwashing',
+    2: 'End Handwashing',
+    3: 'Wrist Disappears',
 }
 
 
@@ -29,26 +25,15 @@ class SampleVideo(Dataset):
     def __len__(self):
         return 1
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx): 
         cap = cv2.VideoCapture(self.path)
-        frame_size = [cap.get(cv2.CAP_PROP_FRAME_HEIGHT), cap.get(cv2.CAP_PROP_FRAME_WIDTH)]
-        ratio = self.input_size / max(frame_size)
-        new_size = tuple([int(x * ratio) for x in frame_size])
-        delta_w = self.input_size - new_size[1]
-        delta_h = self.input_size - new_size[0]
-        top, bottom = delta_h // 2, delta_h - (delta_h // 2)
-        left, right = delta_w // 2, delta_w - (delta_w // 2)
 
         # preprocess and return frames
         images = []
         for pos in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
-            _, img = cap.read()
-            resized = cv2.resize(img, (new_size[1], new_size[0]))
-            b_img = cv2.copyMakeBorder(resized, top, bottom, left, right, cv2.BORDER_CONSTANT,
-                                       value=[0.406 * 255, 0.456 * 255, 0.485 * 255])  # ImageNet means (BGR)
-
-            b_img_rgb = cv2.cvtColor(b_img, cv2.COLOR_BGR2RGB)
-            images.append(b_img_rgb)
+            _, frame = cap.read()
+            resized = cv2.resize(frame, (self.input_size, self.input_size))
+            images.append(resized)
         cap.release()
         labels = np.zeros(len(images)) # only for compatibility with transforms
         sample = {'images': np.asarray(images), 'labels': np.asarray(labels)}
@@ -72,15 +57,15 @@ if __name__ == '__main__':
 
     dl = DataLoader(ds, batch_size=1, shuffle=False, drop_last=False)
 
-    model = EventDetector(pretrain=True,
-                          width_mult=1.,
-                          lstm_layers=1,
-                          lstm_hidden=256,
-                          bidirectional=True,
-                          dropout=False)
+    model = Handy(pretrain=True,
+                        width_mult=1.,
+                        lstm_layers=1,
+                        lstm_hidden=256,
+                        bidirectional=True,
+                        dropout=False)
 
     try:
-        save_dict = torch.load('models/swingnet_1800.pth.tar')
+        save_dict = torch.load('models/net_1800.pth.tar')
     except:
         print("Model weights not found. Download model weights and place in 'models' folder. See README for instructions")
 
@@ -92,7 +77,7 @@ if __name__ == '__main__':
     print("Loaded model weights")
 
     print('Testing...')
-    for sample in dl:
+    for sample in dl: 
         images = sample['images']
         # full samples do not fit into GPU memory so evaluate sample in 'seq_length' batches
         batch = 0
@@ -101,7 +86,7 @@ if __name__ == '__main__':
                 image_batch = images[:, batch * seq_length:, :, :, :]
             else:
                 image_batch = images[:, batch * seq_length:(batch + 1) * seq_length, :, :, :]
-            logits = model(image_batch.cuda())
+            logits = model(image_batch.to(device))
             if batch == 0:
                 probs = F.softmax(logits.data, dim=1).cpu().numpy()
             else:
@@ -109,7 +94,7 @@ if __name__ == '__main__':
             batch += 1
 
     events = np.argmax(probs, axis=0)[:-1]
-    print('Predicted event frames: {}'.format(events))
+    print('Predicted event frames: {}'.format(events))   
     cap = cv2.VideoCapture(args.path)
 
     confidence = []
@@ -119,10 +104,9 @@ if __name__ == '__main__':
 
     for i, e in enumerate(events):
         cap.set(cv2.CAP_PROP_POS_FRAMES, e)
-        _, img = cap.read()
-        cv2.putText(img, '{:.3f}'.format(confidence[i]), (20, 20), cv2.FONT_HERSHEY_DUPLEX, 0.75, (0, 0, 255))
-        cv2.imshow(event_names[i], img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        _, frame = cap.read()
+        frame = frame[:, :, [2, 1, 0]]
+        image = Image.fromarray(frame)
+        image.save(f'/content/drive/MyDrive/handwashing_results/{event_names[i]}-{confidence[i]}.jpg')
 
 
