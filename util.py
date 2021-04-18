@@ -19,21 +19,22 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def correct_preds(probs, labels, tol=-1):
+def correct_preds(probs, labels, tol=-1): #HERE
     """
-    Gets correct events in full-length sequence using tolerance based on number of frames from address to impact.
+    Gets correct events in full-length sequence using tolerance based on total number of frames.
     Used during validation only.
-    :param probs: (sequence_length, 9)
+    :param probs: (sequence_length, 5)
     :param labels: (sequence_length,)
-    :return: array indicating correct events in predicted sequence (8,)
+    :return: array indicating correct events in predicted sequence (4,)
     """
 
-    events = np.where(labels < 8)[0]
+    events = np.where(labels < 4)[0]
     preds = np.zeros(len(events))
     if tol == -1:
-        tol = int(max(np.round((events[5] - events[0])/30), 1))
+        #tol = int(max(np.round((events[5] - events[0])/30), 1))
+        tol = 10 #TOLERANCE
     for i in range(len(events)):
-        preds[i] = np.argsort(probs[:, i])[-1] #gets event with highest probabily for each index??
+        preds[i] = np.argsort(probs[:, i])[-1] # gets event with highest probabily for each index
     deltas = np.abs(events-preds)
     correct = (deltas <= tol).astype(np.uint8)
     return events, preds, deltas, tol, correct
