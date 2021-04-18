@@ -4,18 +4,21 @@ from torch.autograd import Variable
 from MobileNetV2 import MobileNetV2
 
 
-class EventDetector(nn.Module):
-    def __init__(self, pretrain, width_mult, lstm_layers, lstm_hidden, bidirectional=True, dropout=True):
-        super(EventDetector, self).__init__()
+class Handy(nn.Module):
+    def __init__(self, pretrain, width_mult, lstm_layers, lstm_hidden, device, bidirectional=True, dropout=True):
+        super(Handy, self).__init__()
         self.width_mult = width_mult
         self.lstm_layers = lstm_layers
         self.lstm_hidden = lstm_hidden
         self.bidirectional = bidirectional
         self.dropout = dropout
+        self.device = device
 
         net = MobileNetV2(width_mult=width_mult)
-        state_dict_mobilenet = torch.load('mobilenet_v2.pth.tar')
-        if pretrain:
+
+        
+        if pretrain: # Need to run on GPU to load mobilenet_v2 
+            state_dict_mobilenet = torch.load('mobilenet_v2.pth.tar')
             net.load_state_dict(state_dict_mobilenet)
 
         self.cnn = nn.Sequential(*list(net.children())[0][:19])
@@ -23,19 +26,19 @@ class EventDetector(nn.Module):
                            self.lstm_hidden, self.lstm_layers,
                            batch_first=True, bidirectional=bidirectional)
         if self.bidirectional:
-            self.lin = nn.Linear(2*self.lstm_hidden, 9) #9 number of event classes in our case: 3.
+            self.lin = nn.Linear(2*self.lstm_hidden, 5) #number of event classes in our case 5: 4 events and 1 non-event.
         else:
-            self.lin = nn.Linear(self.lstm_hidden, 9)
+            self.lin = nn.Linear(self.lstm_hidden, 5)
         if self.dropout:
             self.drop = nn.Dropout(0.5)
 
     def init_hidden(self, batch_size):
         if self.bidirectional:
-            return (Variable(torch.zeros(2*self.lstm_layers, batch_size, self.lstm_hidden).cuda(), requires_grad=True),
-                    Variable(torch.zeros(2*self.lstm_layers, batch_size, self.lstm_hidden).cuda(), requires_grad=True))
+            return (Variable(torch.zeros(2*self.lstm_layers, batch_size, self.lstm_hidden).to(self.device), requires_grad=True),
+                    Variable(torch.zeros(2*self.lstm_layers, batch_size, self.lstm_hidden).to(self.device), requires_grad=True))
         else:
-            return (Variable(torch.zeros(self.lstm_layers, batch_size, self.lstm_hidden).cuda(), requires_grad=True),
-                    Variable(torch.zeros(self.lstm_layers, batch_size, self.lstm_hidden).cuda(), requires_grad=True))
+            return (Variable(torch.zeros(self.lstm_layers, batch_size, self.lstm_hidden).to(self.device), requires_grad=True),
+                    Variable(torch.zeros(self.lstm_layers, batch_size, self.lstm_hidden).to(self.device), requires_grad=True))
 
     def forward(self, x, lengths=None):
         batch_size, timesteps, C, H, W = x.size()
@@ -52,7 +55,7 @@ class EventDetector(nn.Module):
         r_in = c_out.view(batch_size, timesteps, -1)
         r_out, states = self.rnn(r_in, self.hidden)
         out = self.lin(r_out)
-        out = out.view(batch_size*timesteps,9)
+        out = out.view(batch_size*timesteps,5) #output is number of classes
 
         return out
 

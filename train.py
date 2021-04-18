@@ -1,5 +1,5 @@
-from dataloader import GolfDB, Normalize, ToTensor
-from model import EventDetector
+from dataloader import HandwashDB, Normalize, ToTensor
+from model import Handy
 from util import *
 import torch
 from torch.utils.data import DataLoader
@@ -10,6 +10,7 @@ import os
 if __name__ == '__main__':
 
     # training configuration
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     split = 1
     iterations = 2000
     it_save = 100  # save model every 100 iterations
@@ -18,24 +19,27 @@ if __name__ == '__main__':
     bs = 22  # batch size
     k = 10  # frozen layers
 
-    model = EventDetector(pretrain=True,
+    model = Handy(pretrain=False, #change for True on GPU
                           width_mult=1.,
                           lstm_layers=1,
                           lstm_hidden=256,
+                          device = device,
                           bidirectional=True,
-                          dropout=False)
+                          dropout=False
+                          )
     freeze_layers(k, model)
     model.train()
-    model.cuda()
+    model.to(device)
 
-    dataset = GolfDB(data_file='data/train_split_{}.pkl'.format(split),
-                     vid_dir='data/videos_160/',
-                     seq_length=seq_length,
-                     transform=transforms.Compose([ToTensor(),
+    dataset = HandwashDB(data_file='data/train_split_{}.pkl'.format(split),
+                        vid_dir='data/handwash_videos_160/',
+                        seq_length=seq_length,
+                        transform=transforms.Compose([ToTensor(),
                                                    Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
-                     train=True)
+                        train=True)
+    print(dataset.__getitem__(20)) #checking that dataset is properly defined
 
-    data_loader = DataLoader(dataset,
+    """data_loader = DataLoader(dataset,
                              batch_size=bs,
                              shuffle=True,
                              num_workers=n_cpu,
@@ -70,6 +74,7 @@ if __name__ == '__main__':
                             'model_state_dict': model.state_dict()}, 'models/swingnet_{}.pth.tar'.format(i))
             if i == iterations:
                 break
+    """
 
 
 
