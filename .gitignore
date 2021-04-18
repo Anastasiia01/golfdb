@@ -3,5 +3,6 @@ data/videos_160
 data/handwash_videos_160
 data/handwashing_videos
 data/handwashing.mat
+__pycache__/
 *.pkl
 *.tar
