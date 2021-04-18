@@ -19,7 +19,7 @@ if __name__ == '__main__':
     bs = 22  # batch size
     k = 10  # frozen layers
 
-    model = Handy(pretrain=False, #change for True on GPU
+    model = Handy(pretrain=True, #change for True on GPU
                           width_mult=1.,
                           lstm_layers=1,
                           lstm_hidden=256,
