@@ -65,10 +65,10 @@ class HandwashDB(Dataset):
                 _, frame = cap.read()
                 img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 images.append(img)
-                if pos in events[1:-1]:
-                    labels.append(np.where(events[1:-1] == pos)[0][0]) # any of action classes
+                if pos in events:
+                    labels.append(np.where(events == pos)[0][0]) # any of action classes
                 else:
-                    labels.append(8) # label no-class
+                    labels.append(4) # label no-class
             cap.release()
 
         sample = {'images':np.asarray(images), 'labels':np.asarray(labels)}
@@ -101,17 +101,17 @@ if __name__ == '__main__':
 
     norm = Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # ImageNet mean and std (RGB)
 
-    dataset = GolfDB(data_file='data/train_split_1.pkl',
-                     vid_dir='data/videos_160/',
-                     seq_length=64,
-                     transform=transforms.Compose([ToTensor(), norm]),
-                     train=False)
+    dataset = HandwashDB(data_file='data/train_split_1.pkl',
+                        vid_dir='data/handwash_videos_160/',
+                        seq_length=64,
+                        transform=transforms.Compose([ToTensor(), norm]),
+                        train=False)
 
-    data_loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=6, drop_last=False)
+    data_loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=1, drop_last=False)
 
     for i, sample in enumerate(data_loader):
         images, labels = sample['images'], sample['labels']
-        events = np.where(labels.squeeze() < 8)[0]
+        events = np.where(labels.squeeze() < 4)[0]
         print('{} events: {}'.format(len(events), events))
 
 
