@@ -12,7 +12,7 @@ d = dict()
 for idx, k in enumerate(l):
     d["{:3d}".format(idx)] = list(l[idx])
 df = pd.DataFrame(d).T
-df.columns = ["video_name", "events", "split", "view", "total_frames"]
+df.columns = ["video_name", "events", "split", "total_frames", "view"]
 
 # data format cleansing by removing extra bracets around data
 df['video_name'] = df['video_name'].apply(lambda x: x[0][0])
