@@ -14,9 +14,9 @@ if __name__ == '__main__':
     split = 1
     iterations = 2000
     it_save = 100  # save model every 100 iterations
-    n_cpu = 6
-    seq_length = 64
-    bs = 22  # batch size
+    n_cpu = 1
+    seq_length = 128
+    bs = 14  # batch size
     k = 10  # frozen layers
 
     model = Handy(pretrain=True, #change for True on GPU
@@ -46,8 +46,8 @@ if __name__ == '__main__':
                              drop_last=True)
     
     # the 4 handwashing events are classes 0 through 3, no-event is class 4
-    # the ratio of events to no-events is approximately 1:250 so weight classes accordingly:
-    weights = torch.FloatTensor([1/4, 1/4, 1/4, 1/4, 1/250]).to(device)
+    # the ratio of events to no-events is approximately 1:78.48 so weight classes accordingly:
+    weights = torch.FloatTensor([1/4, 1/4, 1/4, 1/4, 1/79]).to(device)
     criterion = torch.nn.CrossEntropyLoss(weight=weights)
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.001)
 
