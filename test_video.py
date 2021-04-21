@@ -28,12 +28,15 @@ class SampleVideo(Dataset):
     def __getitem__(self, idx): 
         cap = cv2.VideoCapture(self.path)
 
-        # preprocess and return frames
+        # preprocess and return frames   
         images = []
+        count = 0 
         for pos in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
             _, frame = cap.read()
-            resized = cv2.resize(frame, (self.input_size, self.input_size))
-            images.append(resized)
+            if count%3==0:            
+                resized = cv2.resize(frame, (self.input_size, self.input_size))
+                images.append(resized)
+            count+=1            
         cap.release()
         labels = np.zeros(len(images)) # only for compatibility with transforms
         sample = {'images': np.asarray(images), 'labels': np.asarray(labels)}
@@ -45,7 +48,7 @@ class SampleVideo(Dataset):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--path', help='Path to video that you want to test', default='test_video.mp4')
-    parser.add_argument('-s', '--seq-length', type=int, help='Number of frames to use per forward pass', default=64)
+    parser.add_argument('-s', '--seq-length', type=int, help='Number of frames to use per forward pass', default=128)
     args = parser.parse_args()
     seq_length = args.seq_length
 
