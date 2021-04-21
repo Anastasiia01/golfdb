@@ -19,7 +19,7 @@ class Preprocessing(object):
         self.ratioArr = []
         self.framesCountArr = []
         #self.lock = Lock()
-        self.frames_till_events = 90
+        self.frames_till_events = 20
 
     def preprocess_videos(self, video_name):
         """
@@ -38,7 +38,7 @@ class Preprocessing(object):
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             out = cv2.VideoWriter(os.path.join(self.output_dir, "{}.mp4".format(video_name)),
                                 fourcc, cap.get(cv2.CAP_PROP_FPS), (self.dim, self.dim))
-            count = 0
+            full_count = 0
             success, frame = cap.read()
             num_frames = 0  
             start_frame = None
@@ -47,22 +47,25 @@ class Preprocessing(object):
             image = Image.fromarray(frame)"""
             while success:
                 # using frames from 3 sec before hands appear and 3 sec after they disappear.
-                if count >= events[0]-self.frames_till_events and count <= events[-1]+self.frames_till_events: 
-                    if (start_frame==None):
-                        start_frame = count
-                    resized = cv2.resize(frame, (self.dim, self.dim))
-                    out.write(resized)
-                if count > events[-1]+self.frames_till_events:
-                    break
-                count += 1
+                if full_count%3==0:
+                    count = full_count//3 # actual rate is 30fps, we need 10fps
+                    if count >= events[0]-self.frames_till_events and count <= events[-1]+self.frames_till_events: 
+                        if (start_frame==None):
+                            start_frame = count
+                        resized = cv2.resize(frame, (self.dim, self.dim))
+                        out.write(resized)
+                    if count > events[-1]+self.frames_till_events:
+                        count = count - 1
+                        break
+                full_count += 1
                 success, frame = cap.read()
 
-            """end_frame = count - 1 
+            end_frame = count
+            #print(f"start: {start_frame} and end: {end_frame}")
             total_used_frames = end_frame - start_frame + 1
             ratioNoneventVsEvent = (total_used_frames - 4)/4
-            with self.lock:
-                self.ratioArr.append(ratioNoneventVsEvent)
-                self.framesCountArr.append(total_used_frames)"""
+            self.ratioArr.append(ratioNoneventVsEvent)
+            self.framesCountArr.append(total_used_frames)
 
             #print(f"total number of frames is {total_used_frames}")
             #print(f"Then ratioEventVsNonevent is {ratioNoneventVsEvent}")
@@ -73,11 +76,11 @@ class Preprocessing(object):
 
 if __name__ == '__main__':
     prep = Preprocessing()
-    #prep.preprocess_videos(prep.df.video_name[0]) # to preprocess a single video
-    pool = Pool(6) #multiprocessesing
-    pool.map(prep.preprocess_videos, prep.df.video_name) # to preprocess all videos
+    #prep.preprocess_videos(prep.df.video_name[3]) # to preprocess a single video
+    #pool = Pool(6) #multiprocessesing
+    #pool.map(prep.preprocess_videos, prep.df.video_name) # to preprocess all videos
 
-    """for idx in range(len(prep.df.video_name)):
+    for idx in range(len(prep.df.video_name)):
         #print(idx)
         prep.preprocess_videos(prep.df.video_name[idx]) 
     print(f"Arr \n {prep.ratioArr}")
@@ -85,4 +88,4 @@ if __name__ == '__main__':
     print(f" Number of ratios is {len(prep.ratioArr)}")
     print(f"Frames Arr \n {prep.framesCountArr}")
     print(f"Avg frame number is {mean(prep.framesCountArr)}" )
-    print(f" Number of frame counts is {len(prep.framesCountArr)}")"""
+    print(f" Number of frame counts is {len(prep.framesCountArr)}")
