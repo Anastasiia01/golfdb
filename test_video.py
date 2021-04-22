@@ -122,7 +122,7 @@ if __name__ == '__main__':
                                           [0.229, 0.224, 0.225])])
     sample = transform(sample)        
     images = sample['images']
-    print(images.shape) #(412, 160, 160, 3)
+    images = images.view(1, images.shape[0], images.shape[1], images.shape[2], images.shape[3]) 
     probs = get_probs(images, model, device, seq_length)
 
     events = np.argmax(probs, axis=0)[:-1]
