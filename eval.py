@@ -51,7 +51,7 @@ def eval(model, split, seq_length, n_cpu, device, disp):
 if __name__ == '__main__':
 
     split = 1
-    seq_length = 64
+    seq_length = 128
     n_cpu = 1
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
                           bidirectional=True,
                           dropout=False)
 
-    save_dict = torch.load('models/net_1800.pth.tar')
+    save_dict = torch.load('models/net_v2_1600.pth.tar')
     model.load_state_dict(save_dict['model_state_dict'])
     model.to(device)
     model.eval()
