@@ -61,7 +61,9 @@ if __name__ == '__main__':
                                           [0.229, 0.224, 0.225])]))
 
     dl = DataLoader(ds, batch_size=1, shuffle=False, drop_last=False)
-
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print('Using device:', device)
+    
     model = Handy(pretrain=True,
                         width_mult=1.,
                         lstm_layers=1,
@@ -75,8 +77,6 @@ if __name__ == '__main__':
     except:
         print("Model weights not found. Download model weights and place in 'models' folder. See README for instructions")
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print('Using device:', device)
     model.load_state_dict(save_dict['model_state_dict'])
     model.to(device)
     model.eval()
