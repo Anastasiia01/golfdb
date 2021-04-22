@@ -36,8 +36,8 @@ class SampleVideo(Dataset):
             _, frame = cap.read()
             if count%3==0:            
                 resized = cv2.resize(frame, (self.input_size, self.input_size))
-                img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                images.append(resized)
+                img = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
+                images.append(img)
             count+=1            
         cap.release()
         labels = np.zeros(len(images)) # only for compatibility with transforms
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     dl = DataLoader(ds, batch_size=1, shuffle=False, drop_last=False)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('Using device:', device)
-    
+
     model = Handy(pretrain=True,
                         width_mult=1.,
                         lstm_layers=1,
