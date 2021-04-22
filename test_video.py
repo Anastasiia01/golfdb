@@ -10,6 +10,8 @@ import torch.nn.functional as F
 from PIL import Image
 #from data.preprocess_videos import prep
 
+# Version that correctly distinguishes wrist appear and wrist disappear events.
+
 event_names = {
     0: 'Wrist Appears',
     1: 'Start Handwashing',
