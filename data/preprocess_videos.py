@@ -6,20 +6,22 @@ from threading import Lock
 import numpy as np
 from statistics import mean
 
-
+folder = "/content/drive/MyDrive/SwingNet/golfdb/data/" # set equal to empty string if running from local CPU.
 class Preprocessing(object):
     """Preprocesses videos by extracts relevant frames from thwm"""
     def __init__(self, video_dimensions = 160):
-        self.df = pd.read_pickle('handwash.pkl')
+        pickle = folder + 'handwash.pkl'
+        self.df = pd.read_pickle(pickle)
         self.dim = video_dimensions
-        self.input_dir = 'handwashing_videos/'
-        self.output_dir = 'handwash_videos_{}/'.format(self.dim)
+        self.input_dir = folder + 'handwashing_videos/'
+        self.output_dir = folder + 'handwash_videos_temp_{}/'.format(self.dim)
         if not os.path.exists(self.output_dir):
             os.mkdir(self.output_dir)
         self.ratioArr = []
         self.framesCountArr = []
         #self.lock = Lock()
         self.frames_till_events = 20
+        self.all_frames = []
 
     def preprocess_videos(self, video_name):
         """
@@ -53,6 +55,7 @@ class Preprocessing(object):
                         if (start_frame==None):
                             start_frame = count
                         resized = cv2.resize(frame, (self.dim, self.dim))
+                        self.all_frames.append(resized)
                         out.write(resized)
                     if count > events[-1]+self.frames_till_events:
                         count = count - 1
@@ -72,6 +75,10 @@ class Preprocessing(object):
 
         else:
             print(f'Video with name {video_name} already completed for size {self.dim}')
+
+prep = Preprocessing()
+prep.preprocess_videos(prep.df.video_name[0])
+#print(prep.all_frames)
 
 
 if __name__ == '__main__':
