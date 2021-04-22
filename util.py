@@ -35,6 +35,9 @@ def correct_preds(probs, labels, tol=-1): #HERE
         tol = 5 #TOLERANCE
     for i in range(len(events)):
         preds[i] = np.argsort(probs[:, i])[-1] # gets event with highest probabily for each index
+    
+    #print(f"predictions: {preds}")
+    #print(f"events: {events}")
     deltas = np.abs(events-preds)
     correct = (deltas <= tol).astype(np.uint8)
     return events, preds, deltas, tol, correct
