@@ -7,6 +7,7 @@ from eval import ToTensor, Normalize
 from model import Handy
 import numpy as np
 import torch.nn.functional as F
+from PIL import Image
 
 event_names = {
     0: 'Wrist Appears',
@@ -35,6 +36,7 @@ class SampleVideo(Dataset):
             _, frame = cap.read()
             if count%3==0:            
                 resized = cv2.resize(frame, (self.input_size, self.input_size))
+                img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 images.append(resized)
             count+=1            
         cap.release()
@@ -64,11 +66,12 @@ if __name__ == '__main__':
                         width_mult=1.,
                         lstm_layers=1,
                         lstm_hidden=256,
+                        device = device,
                         bidirectional=True,
                         dropout=False)
 
     try:
-        save_dict = torch.load('models/net_1800.pth.tar')
+        save_dict = torch.load('models/net_v2_1600.pth.tar')
     except:
         print("Model weights not found. Download model weights and place in 'models' folder. See README for instructions")
 
