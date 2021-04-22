@@ -8,6 +8,7 @@ from model import Handy
 import numpy as np
 import torch.nn.functional as F
 from PIL import Image
+#from data.preprocess_videos import prep
 
 event_names = {
     0: 'Wrist Appears',
@@ -85,6 +86,7 @@ if __name__ == '__main__':
     print('Testing...')
     for sample in dl: 
         images = sample['images']
+        #print(images.shape) torch.Size([1, 414, 3, 160, 160])
         # full samples do not fit into GPU memory so evaluate sample in 'seq_length' batches
         batch = 0
         while batch * seq_length < images.shape[1]:
