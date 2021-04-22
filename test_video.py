@@ -8,7 +8,7 @@ from model import Handy
 import numpy as np
 import torch.nn.functional as F
 from PIL import Image
-#from data.preprocess_videos import prep
+from data.preprocess_videos import prep
 
 # Version that correctly distinguishes wrist appear and wrist disappear events.
 
@@ -106,6 +106,21 @@ if __name__ == '__main__':
         #print(images.shape) torch.Size([1, 414, 3, 160, 160])
         # full samples do not fit into GPU memory so evaluate sample in 'seq_length' batches
         probs = get_probs(images, model, device, seq_length)
+    
+    prep_images = prep.all_frames
+    images = []
+    for i, frame in enumerate(prep_images):
+        img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        images.append(img)
+        #image = frame[:, :, [2, 1, 0]]
+        #image = Image.fromarray(image)
+        #image.save(f'/content/drive/MyDrive/preprocessed_video_frames3/{i}.jpg')
+    labels = np.zeros(len(images)) # only for compatibility with transforms
+    sample = {'images': np.asarray(images), 'labels': np.asarray(labels)}
+    sample = transform(sample)        
+    images = sample['images']
+    print(images.shape) #(412, 160, 160, 3)
+    probs = get_probs(images, model, device, seq_length)
 
     events = np.argmax(probs, axis=0)[:-1]
     print('Predicted event frames: {}'.format(events))   
