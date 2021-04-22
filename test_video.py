@@ -50,6 +50,21 @@ class SampleVideo(Dataset):
         return sample
 
 
+def get_probs(images, model, device, seq_length):
+  batch = 0
+  while batch * seq_length < images.shape[1]:
+      if (batch + 1) * seq_length > images.shape[1]:
+          image_batch = images[:, batch * seq_length:, :, :, :]
+      else:
+          image_batch = images[:, batch * seq_length:(batch + 1) * seq_length, :, :, :]
+      logits = model(image_batch.to(device))
+      if batch == 0:
+          probs = F.softmax(logits.data, dim=1).cpu().numpy()
+      else:
+          probs = np.append(probs, F.softmax(logits.data, dim=1).cpu().numpy(), 0)
+      batch += 1
+  return probs
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--path', help='Path to video that you want to test', default='test_video.mp4')
@@ -90,18 +105,7 @@ if __name__ == '__main__':
         images = sample['images']
         #print(images.shape) torch.Size([1, 414, 3, 160, 160])
         # full samples do not fit into GPU memory so evaluate sample in 'seq_length' batches
-        batch = 0
-        while batch * seq_length < images.shape[1]:
-            if (batch + 1) * seq_length > images.shape[1]:
-                image_batch = images[:, batch * seq_length:, :, :, :]
-            else:
-                image_batch = images[:, batch * seq_length:(batch + 1) * seq_length, :, :, :]
-            logits = model(image_batch.to(device))
-            if batch == 0:
-                probs = F.softmax(logits.data, dim=1).cpu().numpy()
-            else:
-                probs = np.append(probs, F.softmax(logits.data, dim=1).cpu().numpy(), 0)
-            batch += 1
+        probs = get_probs(images, model, device, seq_length)
 
     events = np.argmax(probs, axis=0)[:-1]
     print('Predicted event frames: {}'.format(events))   
