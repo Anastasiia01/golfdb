@@ -117,6 +117,9 @@ if __name__ == '__main__':
         #image.save(f'/content/drive/MyDrive/preprocessed_video_frames3/{i}.jpg')
     labels = np.zeros(len(images)) # only for compatibility with transforms
     sample = {'images': np.asarray(images), 'labels': np.asarray(labels)}
+    transform = transforms.Compose([ToTensor(),
+                                Normalize([0.485, 0.456, 0.406],
+                                          [0.229, 0.224, 0.225])])
     sample = transform(sample)        
     images = sample['images']
     print(images.shape) #(412, 160, 160, 3)
